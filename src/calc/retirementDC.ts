@@ -1,39 +1,42 @@
+import { SALARY_GROWTH_RATE } from '../constants';
 import type { RetirementDCInput, RetirementDCResult } from '../types';
-import { calcFV, calcPMT } from './utils';
+import { buildGrowthDataWithSalaryGrowth, calcPMT } from './utils';
 
 /**
  * 퇴직연금(DC형) 예상 수령액 계산
+ * - 월급 입력 시: 법정 기여율(연봉의 1/12) 자동 적용, 매년 4% 상승 반영
+ * - 월 납입액 직접 입력 시: 고정 납입액 사용
  */
 export function calcRetirementDC(
   input: RetirementDCInput,
   currentAge: number
 ): RetirementDCResult {
   const monthlyRate = input.annualReturn / 12;
+  const yearsToRetirement = Math.max(0, input.retirementAge - currentAge);
 
-  // 은퇴 나이까지 남은 개월수
-  const remainingMonths = Math.max(0, (input.retirementAge - currentAge) * 12);
+  // 월 납입액 결정:
+  // 월급 입력 시 → 법정 퇴직연금 기여율 = 연봉 / 12 = 월급 / 12 × 12 / 12 = 월급 / 12
+  const useSalary = input.monthlySalary > 0;
+  const initialMonthlyPayment = useSalary
+    ? input.monthlySalary / 12
+    : input.monthlyPayment;
 
-  // 은퇴 시 예상 적립금
-  const balanceAtRetirement = calcFV(
+  // 월급 입력 시 매년 4% 상승 반영
+  const salaryGrowth = useSalary ? SALARY_GROWTH_RATE : 0;
+
+  // 나이별 적립금 성장 데이터 (현재 나이 ~ 은퇴 나이)
+  const growthData = buildGrowthDataWithSalaryGrowth(
     input.currentBalance,
-    input.monthlyPayment,
+    initialMonthlyPayment,
     monthlyRate,
-    remainingMonths
+    yearsToRetirement,
+    salaryGrowth
   );
 
-  // 월 수령액 계산
+  const balanceAtRetirement = growthData[growthData.length - 1];
+
   const receivingMonths = input.receivingYears * 12;
   const monthlyAmount = calcPMT(monthlyRate, receivingMonths, balanceAtRetirement);
-
-  // 성장 곡선 데이터 (현재 나이 ~ 은퇴 나이)
-  const growthData: number[] = [];
-  const endAge = Math.max(currentAge, input.retirementAge);
-  for (let age = currentAge; age <= endAge; age++) {
-    const months = (age - currentAge) * 12;
-    growthData.push(
-      Math.max(0, calcFV(input.currentBalance, input.monthlyPayment, monthlyRate, months))
-    );
-  }
 
   return {
     monthlyAmount: Math.max(0, monthlyAmount),

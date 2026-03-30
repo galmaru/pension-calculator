@@ -18,6 +18,9 @@ export const PP_DEFAULT_START_AGE = 65;
 export const PP_MIN_START_AGE = 55;
 export const PP_DEFAULT_RECEIVING_YEARS = 20;
 
+// 연봉 상승률 (국민연금/퇴직연금 계산에 적용)
+export const SALARY_GROWTH_RATE = 0.04; // 매년 4%
+
 // 수익률 슬라이더 범위
 export const RETURN_MIN = 0.01;  // 1%
 export const RETURN_MAX = 0.15;  // 15%

@@ -26,6 +26,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   },
   retirementDC: {
     currentBalance: 1000,
+    monthlySalary: 0,
     monthlyPayment: 30,
     annualReturn: RETURN_DEFAULT,
     retirementAge: DC_DEFAULT_RETIREMENT_AGE,

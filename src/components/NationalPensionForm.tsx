@@ -1,5 +1,5 @@
 import type { NationalPensionInput } from '../types';
-import { NP_ANNUAL_RETURN, NP_RETURN_PERIOD, NP_START_AGE } from '../constants';
+import { NP_ANNUAL_RETURN, NP_RETURN_PERIOD, NP_START_AGE, SALARY_GROWTH_RATE } from '../constants';
 
 interface Props {
   value: NationalPensionInput;
@@ -132,6 +132,9 @@ export default function NationalPensionForm({ value, onChange }: Props) {
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
                 직장인은 본인부담 4.5% (사업주 4.5% 추가 납부)
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 소득 상승 반영
               </p>
             </div>
           </div>

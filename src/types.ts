@@ -11,7 +11,8 @@ export interface NationalPensionInput {
 // 퇴직연금(DC형) 입력 타입
 export interface RetirementDCInput {
   currentBalance: number;      // 현재 적립금 (만원)
-  monthlyPayment: number;      // 월 납입액 (만원)
+  monthlySalary: number;       // 월급 (만원) — 입력 시 monthlyPayment 자동 계산
+  monthlyPayment: number;      // 월 납입액 (만원) — monthlySalary 입력 시 자동값
   annualReturn: number;        // 예상 연 수익률 (0.01~0.15)
   retirementAge: number;       // 은퇴 나이
   receivingYears: number;      // 수령 기간 (년), 기본 20

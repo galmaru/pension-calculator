@@ -1,5 +1,5 @@
 import type { RetirementDCInput } from '../types';
-import { RETURN_MIN, RETURN_MAX, RETURN_STEP } from '../constants';
+import { RETURN_MIN, RETURN_MAX, RETURN_STEP, SALARY_GROWTH_RATE } from '../constants';
 
 interface Props {
   value: RetirementDCInput;
@@ -15,6 +15,19 @@ export default function RetirementDCForm({ value, onChange }: Props) {
   };
 
   const returnPercent = (value.annualReturn * 100).toFixed(1);
+
+  // 월급 입력 시 자동 계산되는 납입액 (연봉의 1/12 = 월급 / 12)
+  const autoMonthlyPayment = value.monthlySalary > 0
+    ? (value.monthlySalary / 12).toFixed(1)
+    : null;
+
+  const handleSalaryChange = (salary: number) => {
+    update({
+      monthlySalary: salary,
+      // 월급 입력 시 monthlyPayment도 함께 업데이트 (직접 입력 모드 폴백용)
+      monthlyPayment: salary > 0 ? salary / 12 : value.monthlyPayment,
+    });
+  };
 
   return (
     <div className="section-card">
@@ -44,24 +57,56 @@ export default function RetirementDCForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 월 납입액 */}
+        {/* 월급 입력 (자동 납입액 계산) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            월 납입액
+            월급
           </label>
           <div className="flex items-center gap-2">
             <input
               type="number"
               min="0"
-              value={value.monthlyPayment || ''}
-              onChange={(e) => update({ monthlyPayment: Number(e.target.value) })}
+              value={value.monthlySalary || ''}
+              onChange={(e) => handleSalaryChange(Number(e.target.value))}
               className="input-field"
               placeholder="0"
-              aria-label="월 납입액 (만원)"
+              aria-label="월급 (만원)"
             />
             <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
           </div>
+          {autoMonthlyPayment && (
+            <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-700">
+                법정 기여율(연봉의 1/12) 적용 → 월 납입액:{' '}
+                <strong>{autoMonthlyPayment}만원</strong>
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 연봉 상승 반영
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* 월 납입액 (월급 미입력 시 직접 입력) */}
+        {!value.monthlySalary && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              월 납입액 <span className="text-xs text-gray-400">(월급 미입력 시 직접 입력)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                value={value.monthlyPayment || ''}
+                onChange={(e) => update({ monthlyPayment: Number(e.target.value) })}
+                className="input-field"
+                placeholder="0"
+                aria-label="월 납입액 (만원)"
+              />
+              <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
+            </div>
+          </div>
+        )}
 
         {/* 예상 연 수익률 (슬라이더 + 숫자 입력) */}
         <div>
