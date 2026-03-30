@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  /* 숫자 입력 필드 기본 스타일 */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer components {
+  /* 입력 필드 공통 스타일 */
+  .input-field {
+    @apply w-full text-right border border-gray-300 rounded-lg px-3 py-2
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+           bg-white text-gray-900 text-sm;
+  }
+
+  /* 슬라이더 공통 스타일 */
+  .range-slider {
+    @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+  }
+
+  /* 섹션 카드 */
+  .section-card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  }
+
+  /* 탭 버튼 */
+  .tab-btn {
+    @apply flex-1 py-3 text-sm font-semibold rounded-xl transition-all duration-200;
+  }
+  .tab-btn-active {
+    @apply bg-white text-gray-900 shadow-md;
+  }
+  .tab-btn-inactive {
+    @apply text-gray-500 hover:text-gray-700;
+  }
+}
