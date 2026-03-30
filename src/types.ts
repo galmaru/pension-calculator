@@ -29,10 +29,12 @@ export interface PersonalPensionInput {
 
 // 전체 입력 타입
 export interface PensionInputs {
+  currentAge: number;          // 공통 현재 나이 (만 나이)
+  monthlySalary: number;       // 공통 월급 (국민연금 + 퇴직연금 자동 연동)
+  retirementAge: number;       // 공통 은퇴 나이 (퇴직연금 연동)
   nationalPension: NationalPensionInput;
   retirementDC: RetirementDCInput;
   personalPension: PersonalPensionInput;
-  currentAge: number;          // 공통 현재 나이
 }
 
 // 국민연금 계산 결과

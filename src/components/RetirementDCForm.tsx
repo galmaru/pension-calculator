@@ -1,33 +1,42 @@
 import type { RetirementDCInput } from '../types';
-import { RETURN_MIN, RETURN_MAX, RETURN_STEP, SALARY_GROWTH_RATE } from '../constants';
+import {
+  RETURN_MIN,
+  RETURN_MAX,
+  RETURN_STEP,
+  SALARY_GROWTH_RATE,
+  RECEIVING_YEARS_MIN,
+  RECEIVING_YEARS_MAX,
+  RECEIVING_YEARS_STEP,
+} from '../constants';
 
 interface Props {
   value: RetirementDCInput;
+  monthlySalary: number;   // 공통 월급 (상위에서 전달)
+  retirementAge: number;   // 공통 은퇴 나이 (상위에서 전달)
   onChange: (value: RetirementDCInput) => void;
 }
 
-/**
- * 퇴직연금(DC형) 입력 폼 컴포넌트
- */
-export default function RetirementDCForm({ value, onChange }: Props) {
+const receivingYearsLabels = Array.from(
+  { length: (RECEIVING_YEARS_MAX - RECEIVING_YEARS_MIN) / RECEIVING_YEARS_STEP + 1 },
+  (_, i) => RECEIVING_YEARS_MIN + i * RECEIVING_YEARS_STEP
+);
+
+export default function RetirementDCForm({
+  value,
+  monthlySalary,
+  retirementAge,
+  onChange,
+}: Props) {
   const update = (partial: Partial<RetirementDCInput>) => {
     onChange({ ...value, ...partial });
   };
 
   const returnPercent = (value.annualReturn * 100).toFixed(1);
 
-  // 월급 입력 시 자동 계산되는 납입액 (연봉의 1/12 = 월급 / 12)
-  const autoMonthlyPayment = value.monthlySalary > 0
-    ? (value.monthlySalary / 12).toFixed(1)
+  // 공통 월급에서 자동 계산된 납입액
+  const autoMonthlyPayment = monthlySalary > 0
+    ? (monthlySalary / 12).toFixed(1)
     : null;
-
-  const handleSalaryChange = (salary: number) => {
-    update({
-      monthlySalary: salary,
-      // 월급 입력 시 monthlyPayment도 함께 업데이트 (직접 입력 모드 폴백용)
-      monthlyPayment: salary > 0 ? salary / 12 : value.monthlyPayment,
-    });
-  };
 
   return (
     <div className="section-card">
@@ -57,63 +66,54 @@ export default function RetirementDCForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 월급 입력 (자동 납입액 계산) */}
+        {/* 월 납입액: 공통 월급 연동 또는 직접 입력 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            월급
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              value={value.monthlySalary || ''}
-              onChange={(e) => handleSalaryChange(Number(e.target.value))}
-              className="input-field"
-              placeholder="0"
-              aria-label="월급 (만원)"
-            />
-            <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
-          </div>
-          {autoMonthlyPayment && (
-            <div className="mt-2 p-2 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-700">
-                법정 기여율(연봉의 1/12) 적용 → 월 납입액:{' '}
-                <strong>{autoMonthlyPayment}만원</strong>
+          {autoMonthlyPayment ? (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                법정 기여율 (연봉의 1/12) 자동 적용 →{' '}
+                <strong className="text-base">{autoMonthlyPayment}만원/월</strong>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-1">
                 매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 연봉 상승 반영
               </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                월 납입액{' '}
+                <span className="text-xs font-normal text-gray-400">
+                  (상단 월 소득 입력 시 자동 계산)
+                </span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  value={value.monthlyPayment || ''}
+                  onChange={(e) => update({ monthlyPayment: Number(e.target.value) })}
+                  className="input-field"
+                  placeholder="0"
+                  aria-label="월 납입액 (만원)"
+                />
+                <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* 월 납입액 (월급 미입력 시 직접 입력) */}
-        {!value.monthlySalary && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              월 납입액 <span className="text-xs text-gray-400">(월급 미입력 시 직접 입력)</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                value={value.monthlyPayment || ''}
-                onChange={(e) => update({ monthlyPayment: Number(e.target.value) })}
-                className="input-field"
-                placeholder="0"
-                aria-label="월 납입액 (만원)"
-              />
-              <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
-            </div>
-          </div>
-        )}
+        {/* 은퇴 나이 (공통에서 연동) */}
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <span className="text-sm text-gray-600">은퇴 나이</span>
+          <span className="text-sm font-bold text-dc">{retirementAge}세</span>
+        </div>
 
-        {/* 예상 연 수익률 (슬라이더 + 숫자 입력) */}
+        {/* 예상 연 수익률 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             예상 연 수익률
           </label>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2">
             <input
               type="range"
               min={RETURN_MIN}
@@ -142,43 +142,29 @@ export default function RetirementDCForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 은퇴 나이 */}
+        {/* 수령 기간 슬라이더 (20~40년, 5년 단위) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            은퇴 나이
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="40"
-              max="80"
-              value={value.retirementAge || ''}
-              onChange={(e) => update({ retirementAge: Number(e.target.value) })}
-              className="input-field"
-              placeholder="60"
-              aria-label="은퇴 나이"
-            />
-            <span className="text-sm text-gray-500 whitespace-nowrap">세</span>
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium text-gray-700">수령 기간</label>
+            <span className="text-base font-bold text-dc">{value.receivingYears}년</span>
           </div>
-        </div>
-
-        {/* 수령 기간 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            수령 기간
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              max="40"
-              value={value.receivingYears || ''}
-              onChange={(e) => update({ receivingYears: Number(e.target.value) })}
-              className="input-field"
-              placeholder="20"
-              aria-label="수령 기간 (년)"
-            />
-            <span className="text-sm text-gray-500 whitespace-nowrap">년</span>
+          <input
+            type="range"
+            min={RECEIVING_YEARS_MIN}
+            max={RECEIVING_YEARS_MAX}
+            step={RECEIVING_YEARS_STEP}
+            value={value.receivingYears}
+            onChange={(e) => update({ receivingYears: Number(e.target.value) })}
+            className="range-slider w-full accent-dc"
+            aria-label="수령 기간 슬라이더"
+          />
+          <div
+            className="flex justify-between text-xs text-gray-400 mt-1"
+            aria-hidden="true"
+          >
+            {receivingYearsLabels.map((y) => (
+              <span key={y}>{y}년</span>
+            ))}
           </div>
         </div>
       </div>
@@ -187,6 +173,9 @@ export default function RetirementDCForm({ value, onChange }: Props) {
       <div className="mt-5 pt-4 border-t border-gray-100">
         <p className="text-xs text-gray-400">
           ※ 수령 방식: 연금형 고정 (일시금 미지원)
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          ※ 은퇴 나이는 상단 기본 정보에서 설정합니다
         </p>
       </div>
     </div>

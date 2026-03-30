@@ -3,22 +3,21 @@ import { NP_ANNUAL_RETURN, NP_RETURN_PERIOD, NP_START_AGE, SALARY_GROWTH_RATE } 
 
 interface Props {
   value: NationalPensionInput;
+  monthlySalary: number;   // 공통 월급 (상위에서 전달)
   onChange: (value: NationalPensionInput) => void;
 }
 
-/**
- * 국민연금 입력 폼 컴포넌트
- */
-export default function NationalPensionForm({ value, onChange }: Props) {
+export default function NationalPensionForm({ value, monthlySalary, onChange }: Props) {
   const update = (partial: Partial<NationalPensionInput>) => {
     onChange({ ...value, ...partial });
   };
 
-  // 월 납입액 표시 계산 (모드A일 때 자동 계산값 표시)
-  const displayMonthlyPayment =
-    value.inputMode === 'income'
-      ? (value.monthlyIncome * 0.09).toFixed(1)
-      : null;
+  // 모드A 자동 계산값 표시
+  const autoPayment = monthlySalary > 0
+    ? (monthlySalary * 0.09).toFixed(1)
+    : value.monthlyIncome > 0
+    ? (value.monthlyIncome * 0.09).toFixed(1)
+    : null;
 
   return (
     <div className="section-card">
@@ -29,13 +28,6 @@ export default function NationalPensionForm({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-4">
-        {/* 현재 나이 - App.tsx에서 공통 관리하므로 표시만 */}
-        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-          <span className="text-xs text-gray-500">
-            ※ 현재 나이는 상단 공통 입력에서 설정합니다
-          </span>
-        </div>
-
         {/* 총 납입 기간 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -75,7 +67,7 @@ export default function NationalPensionForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 입력 모드 토글 */}
+        {/* 납입액 입력 방식 토글 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             납입액 입력 방식
@@ -90,7 +82,7 @@ export default function NationalPensionForm({ value, onChange }: Props) {
                   : 'bg-white text-gray-600 border-gray-300 hover:border-np'
               }`}
             >
-              월 소득으로 입력
+              월 소득 연동
             </button>
             <button
               type="button"
@@ -106,37 +98,27 @@ export default function NationalPensionForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 모드A: 월 소득 입력 */}
+        {/* 모드A: 공통 월소득 연동 표시 */}
         {value.inputMode === 'income' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              월 소득
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                value={value.monthlyIncome || ''}
-                onChange={(e) => update({ monthlyIncome: Number(e.target.value) })}
-                className="input-field"
-                placeholder="0"
-                aria-label="월 소득 (만원)"
-              />
-              <span className="text-sm text-gray-500 whitespace-nowrap">만원</span>
-            </div>
-            {/* 자동 계산된 납입액 안내 */}
-            <div className="mt-2 p-2 bg-np-light rounded-lg">
-              <p className="text-xs text-np-dark">
-                보험료율 9% 적용 → 월 납입액:{' '}
-                <strong>{displayMonthlyPayment}만원</strong>
+          <div className="p-3 bg-np-light rounded-lg">
+            {autoPayment ? (
+              <>
+                <p className="text-sm text-np-dark">
+                  보험료율 9% 적용 → 월 납입액:{' '}
+                  <strong className="text-base">{autoPayment}만원</strong>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  직장인 본인부담 4.5% (사업주 4.5% 추가)
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 소득 상승 반영
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-gray-500">
+                상단 기본 정보에서 월 소득을 입력하면 자동 계산됩니다
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                직장인은 본인부담 4.5% (사업주 4.5% 추가 납부)
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 소득 상승 반영
-              </p>
-            </div>
+            )}
           </div>
         )}
 
@@ -168,8 +150,8 @@ export default function NationalPensionForm({ value, onChange }: Props) {
           ※ 수령 개시 나이: {NP_START_AGE}세 고정 (1969년생 이후 기준)
         </p>
         <p className="text-xs text-gray-400">
-          ※ 적용 수익률: {NP_RETURN_PERIOD} 국민연금 기금운용 연평균 수익률{' '}
-          {(NP_ANNUAL_RETURN * 100).toFixed(2)}% 적용
+          ※ 적용 수익률: {NP_RETURN_PERIOD} 국민연금 기금운용 연평균{' '}
+          {(NP_ANNUAL_RETURN * 100).toFixed(2)}%
         </p>
       </div>
     </div>

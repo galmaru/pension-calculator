@@ -26,3 +26,15 @@ export const RETURN_MIN = 0.01;  // 1%
 export const RETURN_MAX = 0.15;  // 15%
 export const RETURN_DEFAULT = 0.05; // 5%
 export const RETURN_STEP = 0.001;   // 0.1%
+
+// 은퇴 나이 슬라이더 (5세 단위)
+export const RETIREMENT_AGE_MIN = 55;
+export const RETIREMENT_AGE_MAX = 75;
+export const RETIREMENT_AGE_STEP = 5;
+export const RETIREMENT_AGE_DEFAULT = 60;
+
+// 수령 기간 슬라이더 (5년 단위)
+export const RECEIVING_YEARS_MIN = 20;
+export const RECEIVING_YEARS_MAX = 40;
+export const RECEIVING_YEARS_STEP = 5;
+export const RECEIVING_YEARS_DEFAULT = 20;

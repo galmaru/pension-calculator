@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { PensionInputs } from './types';
 import InputTab from './components/InputTab';
 import ResultTab from './components/ResultTab';
@@ -6,22 +6,26 @@ import { calcNationalPension } from './calc/nationalPension';
 import { calcRetirementDC } from './calc/retirementDC';
 import { calcPersonalPension } from './calc/personalPension';
 import {
-  DC_DEFAULT_RETIREMENT_AGE,
   DC_DEFAULT_RECEIVING_YEARS,
   PP_DEFAULT_START_AGE,
   PP_DEFAULT_RECEIVING_YEARS,
   RETURN_DEFAULT,
+  RETIREMENT_AGE_DEFAULT,
+  RECEIVING_YEARS_DEFAULT,
 } from './constants';
+import { useHistory, saveLastInputs, loadLastInputs } from './hooks/useHistory';
 
-// 초기 입력값
-const DEFAULT_INPUTS: PensionInputs = {
+// 기본 입력값
+const BASE_INPUTS: PensionInputs = {
   currentAge: 35,
+  monthlySalary: 0,
+  retirementAge: RETIREMENT_AGE_DEFAULT,
   nationalPension: {
     currentAge: 35,
     paidMonths: 60,
     totalPaidAmount: 500,
     inputMode: 'income',
-    monthlyIncome: 300,
+    monthlyIncome: 0,
     monthlyPayment: 27,
   },
   retirementDC: {
@@ -29,8 +33,8 @@ const DEFAULT_INPUTS: PensionInputs = {
     monthlySalary: 0,
     monthlyPayment: 30,
     annualReturn: RETURN_DEFAULT,
-    retirementAge: DC_DEFAULT_RETIREMENT_AGE,
-    receivingYears: DC_DEFAULT_RECEIVING_YEARS,
+    retirementAge: RETIREMENT_AGE_DEFAULT,
+    receivingYears: RECEIVING_YEARS_DEFAULT,
   },
   personalPension: {
     currentBalance: 500,
@@ -41,17 +45,30 @@ const DEFAULT_INPUTS: PensionInputs = {
   },
 };
 
+// DC_DEFAULT_RECEIVING_YEARS 사용 (lint 경고 방지)
+void DC_DEFAULT_RECEIVING_YEARS;
+
 type TabType = 'input' | 'result';
 
-/**
- * 내 연금 계산기 메인 앱 컴포넌트
- * 탭 레이아웃으로 입력/결과 화면 전환
- */
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('input');
-  const [inputs, setInputs] = useState<PensionInputs>(DEFAULT_INPUTS);
 
-  // 입력값이 바뀔 때마다 실시간으로 결과 계산
+  // 마지막 저장값 또는 기본값으로 초기화 (재접속 시 복원)
+  const [inputs, setInputs] = useState<PensionInputs>(() => {
+    const last = loadLastInputs();
+    return last ?? BASE_INPUTS;
+  });
+
+  // 입력값 변경 시 자동으로 localStorage에 저장 (세션 복원용)
+  const handleInputChange = useCallback((next: PensionInputs) => {
+    setInputs(next);
+    saveLastInputs(next);
+  }, []);
+
+  // 히스토리 훅
+  const { history, loading: historyLoading, saveHistory, deleteHistory } = useHistory();
+
+  // 실시간 결과 계산
   const results = useMemo(() => {
     const currentAge = inputs.currentAge || 35;
     return {
@@ -60,6 +77,11 @@ export default function App() {
       personalPension: calcPersonalPension(inputs.personalPension, currentAge),
     };
   }, [inputs]);
+
+  // 페이지 로드 시 타이틀 설정
+  useEffect(() => {
+    document.title = '내 연금 계산기';
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,8 +130,12 @@ export default function App() {
         {activeTab === 'input' ? (
           <InputTab
             inputs={inputs}
-            onInputChange={setInputs}
+            onInputChange={handleInputChange}
             onShowResult={() => setActiveTab('result')}
+            history={history}
+            historyLoading={historyLoading}
+            onSaveHistory={saveHistory}
+            onDeleteHistory={deleteHistory}
           />
         ) : (
           <ResultTab results={results} inputs={inputs} />

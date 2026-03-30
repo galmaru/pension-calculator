@@ -1,14 +1,24 @@
 import type { PersonalPensionInput } from '../types';
-import { RETURN_MIN, RETURN_MAX, RETURN_STEP, PP_MIN_START_AGE } from '../constants';
+import {
+  RETURN_MIN,
+  RETURN_MAX,
+  RETURN_STEP,
+  PP_MIN_START_AGE,
+  RECEIVING_YEARS_MIN,
+  RECEIVING_YEARS_MAX,
+  RECEIVING_YEARS_STEP,
+} from '../constants';
 
 interface Props {
   value: PersonalPensionInput;
   onChange: (value: PersonalPensionInput) => void;
 }
 
-/**
- * 개인연금(IRP/연금저축) 입력 폼 컴포넌트
- */
+const receivingYearsLabels = Array.from(
+  { length: (RECEIVING_YEARS_MAX - RECEIVING_YEARS_MIN) / RECEIVING_YEARS_STEP + 1 },
+  (_, i) => RECEIVING_YEARS_MIN + i * RECEIVING_YEARS_STEP
+);
+
 export default function PersonalPensionForm({ value, onChange }: Props) {
   const update = (partial: Partial<PersonalPensionInput>) => {
     onChange({ ...value, ...partial });
@@ -63,12 +73,12 @@ export default function PersonalPensionForm({ value, onChange }: Props) {
           </div>
         </div>
 
-        {/* 예상 연 수익률 (슬라이더 + 숫자 입력) */}
+        {/* 예상 연 수익률 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             예상 연 수익률
           </label>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2">
             <input
               type="range"
               min={RETURN_MIN}
@@ -118,23 +128,29 @@ export default function PersonalPensionForm({ value, onChange }: Props) {
           <p className="text-xs text-gray-400 mt-1">최소 {PP_MIN_START_AGE}세</p>
         </div>
 
-        {/* 수령 기간 */}
+        {/* 수령 기간 슬라이더 (20~40년, 5년 단위) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            수령 기간
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              max="40"
-              value={value.receivingYears || ''}
-              onChange={(e) => update({ receivingYears: Number(e.target.value) })}
-              className="input-field"
-              placeholder="20"
-              aria-label="수령 기간 (년)"
-            />
-            <span className="text-sm text-gray-500 whitespace-nowrap">년</span>
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium text-gray-700">수령 기간</label>
+            <span className="text-base font-bold text-pp">{value.receivingYears}년</span>
+          </div>
+          <input
+            type="range"
+            min={RECEIVING_YEARS_MIN}
+            max={RECEIVING_YEARS_MAX}
+            step={RECEIVING_YEARS_STEP}
+            value={value.receivingYears}
+            onChange={(e) => update({ receivingYears: Number(e.target.value) })}
+            className="range-slider w-full accent-pp"
+            aria-label="수령 기간 슬라이더"
+          />
+          <div
+            className="flex justify-between text-xs text-gray-400 mt-1"
+            aria-hidden="true"
+          >
+            {receivingYearsLabels.map((y) => (
+              <span key={y}>{y}년</span>
+            ))}
           </div>
         </div>
       </div>
