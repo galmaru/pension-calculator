@@ -37,11 +37,28 @@ export interface PensionInputs {
   personalPension: PersonalPensionInput;
 }
 
+// 국민연금 상세 계산 내역 (2026년 개혁안 공식 기준)
+// 연금액(월) = [ 1.29 × (A + B) × 지급률 ] ÷ 12
+export interface NationalPensionCalcDetail {
+  aValue: number;             // A값: 전체 가입자 평균소득월액 (만원)
+  bValue: number;             // B값: 본인 가입기간 중 기준소득월액 평균 (만원, 상하한 적용)
+  bValueRaw: number;          // B값 원본 (클램프 전)
+  totalMonths: number;        // P: 전체 가입월수 (과거 + 미래, 최대 만59세까지 납입)
+  pastMonths: number;         // 현재까지 납입 개월수
+  futureMonths: number;       // 앞으로 납입할 개월수 (현재나이~만59세)
+  excessMonths: number;       // 20년(240개월) 초과 가입월수
+  paymentRate: number;        // 지급률 (10년=0.5, 20년=1.0, 이후 매년 5%p 증가)
+  isQualified: boolean;       // 최소 가입기간 10년(120개월) 충족 여부
+  inputMode: 'income' | 'direct';
+  monthlyIncome: number;      // 월 소득 입력값 (만원)
+}
+
 // 국민연금 계산 결과
 export interface NationalPensionResult {
   monthlyAmount: number;       // 월 수령액 (만원)
   balanceAtRetirement: number; // 은퇴 시 적립금 (만원)
-  growthData: number[];        // 나이별 적립금 배열
+  growthData: number[];        // 나이별 적립금 배열 (참고용)
+  calcDetail: NationalPensionCalcDetail; // 상세 계산 내역
 }
 
 // 퇴직연금 계산 결과
@@ -53,11 +70,13 @@ export interface RetirementDCResult {
 
 // 개인연금 계산 결과
 export interface PersonalPensionResult {
-  monthlyAmountWithTax: number;    // 세액공제 O 월 수령액
-  monthlyAmountWithoutTax: number; // 세액공제 X 월 수령액
+  monthlyAmountWithTax: number;    // 세액공제 O 월 수령액 (세후)
+  monthlyAmountWithoutTax: number; // 세액공제 X 월 수령액 (세후)
+  grossMonthlyAmount: number;      // 세전 월 수령액
   balanceAtStart: number;          // 연금 개시 시 적립금
   growthData: number[];
   effectiveTaxRate: number;        // 실효세율
+  isExceedingLimit: boolean;       // 연 1,500만원(월 125만원) 초과 여부 (16.5% 분리과세 적용)
 }
 
 // 전체 계산 결과

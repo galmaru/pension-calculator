@@ -11,6 +11,7 @@ import {
 
 interface Props {
   value: PersonalPensionInput;
+  currentAge?: number;
   onChange: (value: PersonalPensionInput) => void;
 }
 
@@ -19,11 +20,12 @@ const receivingYearsLabels = Array.from(
   (_, i) => RECEIVING_YEARS_MIN + i * RECEIVING_YEARS_STEP
 );
 
-export default function PersonalPensionForm({ value, onChange }: Props) {
+export default function PersonalPensionForm({ value, currentAge, onChange }: Props) {
   const update = (partial: Partial<PersonalPensionInput>) => {
     onChange({ ...value, ...partial });
   };
 
+  const minAge = Math.max(PP_MIN_START_AGE, currentAge || PP_MIN_START_AGE);
   const returnPercent = (value.annualReturn * 100).toFixed(1);
 
   return (
@@ -115,7 +117,7 @@ export default function PersonalPensionForm({ value, onChange }: Props) {
           <div className="flex items-center gap-2">
             <input
               type="number"
-              min={PP_MIN_START_AGE}
+              min={minAge}
               max="80"
               value={value.startAge || ''}
               onChange={(e) => update({ startAge: Number(e.target.value) })}
@@ -125,7 +127,7 @@ export default function PersonalPensionForm({ value, onChange }: Props) {
             />
             <span className="text-sm text-gray-500 whitespace-nowrap">세</span>
           </div>
-          <p className="text-xs text-gray-400 mt-1">최소 {PP_MIN_START_AGE}세</p>
+          <p className="text-xs text-gray-400 mt-1">최소 {minAge}세부터 개시 가능</p>
         </div>
 
         {/* 수령 기간 슬라이더 (20~40년, 5년 단위) */}

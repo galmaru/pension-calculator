@@ -9,15 +9,27 @@ import { NP_ANNUAL_RETURN, NP_RETURN_PERIOD } from '../constants';
 interface Props {
   results: PensionResults;
   inputs: PensionInputs;
+  onSaveHistory?: (inputs: PensionInputs, label?: string) => Promise<void>;
 }
 
 /**
  * 결과 탭 컴포넌트
  * 요약 카드, 성장 곡선 차트, 연간 수령액 막대 차트, 세금 비교 패널 포함
  */
-export default function ResultTab({ results, inputs }: Props) {
+export default function ResultTab({ results, inputs, onSaveHistory }: Props) {
   // 세액공제 여부 (개인연금 차트 및 합계에 반영)
   const [taxMode, setTaxMode] = useState<'withTax' | 'withoutTax'>('withTax');
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleQuickSave = async () => {
+    if (!onSaveHistory) return;
+    setSaving(true);
+    await onSaveHistory(inputs);
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
 
   const hasData =
     results.nationalPension.monthlyAmount > 0 ||
@@ -40,6 +52,20 @@ export default function ResultTab({ results, inputs }: Props) {
 
       {hasData && (
         <>
+          {/* 빠른 저장 버튼 */}
+          {onSaveHistory && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleQuickSave}
+                disabled={saving || saved}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95 transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <span>{saved ? '✓ 저장 완료!' : saving ? '저장 중...' : '💾 현재 결과 저장하기'}</span>
+              </button>
+            </div>
+          )}
+
           {/* 월 수령액 요약 카드 */}
           <SummaryCards results={results} taxMode={taxMode} />
 
@@ -62,16 +88,16 @@ export default function ResultTab({ results, inputs }: Props) {
       <div className="section-card bg-gray-50 border-gray-100">
         <div className="space-y-1.5">
           <p className="text-xs text-gray-500">
-            ※ 국민연금 수익률: {NP_RETURN_PERIOD} 국민연금 기금운용 연평균 수익률{' '}
-            {(NP_ANNUAL_RETURN * 100).toFixed(2)}% 적용
+            ※ 국민연금: 2026년 개혁안(소득대체율 43% 기준 기본연금액 공식) 적용 추정치입니다.
           </p>
           <p className="text-xs text-gray-500">
-            ※ 국민연금 계산은 적립금 기반 추정치이며, 실제 수령액(A값 연동)과 차이가 있을 수 있습니다.
+            ※ 국민연금 가상 적립금 수익률: {NP_RETURN_PERIOD} 기금운용 연평균 수익률{' '}
+            {(NP_ANNUAL_RETURN * 100).toFixed(2)}% 적용
           </p>
           <p className="text-xs text-gray-400 mt-2 leading-relaxed">
             본 계산기는 참고용 시뮬레이션이며, 실제 연금 수령액은 가입 이력, 소득 변동,
             제도 변경 등에 따라 달라질 수 있습니다. 정확한 수령액은 국민연금공단 또는
-            금융기관에 문의하세요.
+            각 금융기관에 문의하세요.
           </p>
         </div>
       </div>

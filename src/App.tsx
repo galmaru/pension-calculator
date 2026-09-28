@@ -138,7 +138,11 @@ export default function App() {
             onDeleteHistory={deleteHistory}
           />
         ) : (
-          <ResultTab results={results} inputs={inputs} />
+          <ResultTab
+            results={results}
+            inputs={inputs}
+            onSaveHistory={saveHistory}
+          />
         )}
       </main>
     </div>

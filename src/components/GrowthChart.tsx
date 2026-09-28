@@ -164,6 +164,9 @@ export default function GrowthChart({ results, inputs }: Props) {
       <div className="h-64 sm:h-80">
         <Line data={data} options={options} />
       </div>
+      <p className="text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100 leading-relaxed">
+        ※ 국민연금은 국가가 평생 지급을 보장하는 공적 연금(사회보험 DB형)입니다. 위 그래프의 국민연금 곡선은 가입자 및 사업주 납입 총액에 기금운용 수익률(5.92%)을 가상 복리 적용한 시각화 참고치입니다.
+      </p>
     </div>
   );
 }

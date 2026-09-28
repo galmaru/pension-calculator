@@ -71,11 +71,11 @@ export default function RetirementDCForm({
           {autoMonthlyPayment ? (
             <div className="p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700">
-                법정 기여율 (연봉의 1/12) 자동 적용 →{' '}
-                <strong className="text-base">{autoMonthlyPayment}만원/월</strong>
+                법정 퇴직연금 기여율 (연간 1달치 월급 ÷ 12) →{' '}
+                <strong className="text-base">{autoMonthlyPayment}만원 / 월</strong>
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 연봉 상승 반영
+                매년 {(SALARY_GROWTH_RATE * 100).toFixed(0)}% 연봉 상승 반영 (회사 100% 부담)
               </p>
             </div>
           ) : (

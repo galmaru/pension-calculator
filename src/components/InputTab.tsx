@@ -37,10 +37,14 @@ export default function InputTab({
 }: Props) {
   /** 공통 현재 나이 변경 */
   const updateCurrentAge = (age: number) => {
+    const validAge = Math.min(64, Math.max(20, age));
+    const nextRetirementAge = Math.max(inputs.retirementAge, validAge);
     onInputChange({
       ...inputs,
-      currentAge: age,
-      nationalPension: { ...inputs.nationalPension, currentAge: age },
+      currentAge: validAge,
+      retirementAge: nextRetirementAge,
+      nationalPension: { ...inputs.nationalPension, currentAge: validAge },
+      retirementDC: { ...inputs.retirementDC, retirementAge: nextRetirementAge },
     });
   };
 
@@ -56,10 +60,11 @@ export default function InputTab({
 
   /** 공통 은퇴 나이 변경 → 퇴직연금 은퇴나이 동기화 */
   const updateRetirementAge = (age: number) => {
+    const validRetirementAge = Math.max(inputs.currentAge, age);
     onInputChange({
       ...inputs,
-      retirementAge: age,
-      retirementDC: { ...inputs.retirementDC, retirementAge: age },
+      retirementAge: validRetirementAge,
+      retirementDC: { ...inputs.retirementDC, retirementAge: validRetirementAge },
     });
   };
 
@@ -134,14 +139,14 @@ export default function InputTab({
                     국민연금 보험료 (9%){' '}
                     <strong>{monthlySalaryAutoPaymentNP}만원</strong>
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">매년 4% 소득 상승 반영</p>
+                  <p className="text-xs text-gray-400 mt-0.5">본인부담 4.5% + 회사 4.5%</p>
                 </div>
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700">
-                    퇴직연금 기여금 (연봉/12){' '}
+                    퇴직연금 (월 적립액){' '}
                     <strong>{monthlySalaryAutoPaymentDC}만원</strong>
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">매년 4% 연봉 상승 반영</p>
+                  <p className="text-xs text-gray-400 mt-0.5">연간 1개월 월급 ÷ 12</p>
                 </div>
               </div>
             )}
@@ -193,6 +198,7 @@ export default function InputTab({
       {/* ── 개인연금(IRP/연금저축) 섹션 ── */}
       <PersonalPensionForm
         value={inputs.personalPension}
+        currentAge={inputs.currentAge}
         onChange={(pp) => onInputChange({ ...inputs, personalPension: pp })}
       />
 

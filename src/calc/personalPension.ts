@@ -3,14 +3,16 @@ import {
   TAX_RATE_UNDER70,
   TAX_RATE_70_80,
   TAX_RATE_OVER80,
+  ANNUAL_TAX_LIMIT_PP,
+  TAX_RATE_SEPARATE_HIGH,
 } from '../constants';
 import { calcFV, calcPMT } from './utils';
 
 /**
- * 나이 구간별 가중평균 실효세율 계산
- * 연금소득세: 70세 미만 5.5%, 70~80세 4.4%, 80세 이상 3.3%
+ * 나이 구간별 가중평균 기본 연금소득세율 계산
+ * 기본 연금소득세: 70세 미만 5.5%, 70~80세 4.4%, 80세 이상 3.3%
  */
-function calcEffectiveTaxRate(startAge: number, receivingYears: number): number {
+function calcBaseTaxRate(startAge: number, receivingYears: number): number {
   const endAge = startAge + receivingYears;
   let totalTax = 0;
   let totalYears = 0;
@@ -29,7 +31,8 @@ function calcEffectiveTaxRate(startAge: number, receivingYears: number): number 
 
 /**
  * 개인연금(IRP/연금저축) 예상 수령액 계산
- * 세액공제 여부에 따른 세후 수령액 비교 포함
+ * - 세액공제 여부 비교
+ * - 연 1,500만원(월 125만원) 초과 시 16.5% 분리과세 적용
  */
 export function calcPersonalPension(
   input: PersonalPensionInput,
@@ -52,19 +55,31 @@ export function calcPersonalPension(
   const receivingMonths = input.receivingYears * 12;
   const grossMonthlyAmount = calcPMT(monthlyRate, receivingMonths, balanceAtStart);
 
-  // 실효세율 계산
-  const effectiveTaxRate = calcEffectiveTaxRate(input.startAge, input.receivingYears);
+  // 연간 세전 수령액
+  const grossAnnualAmount = grossMonthlyAmount * 12;
 
-  // 세액공제 O: 전체 수령액에 세율 적용 (납입 시 절세 혜택을 받았으므로)
+  // 사적연금 연 1,500만원(월 125만원) 초과 여부
+  const isExceedingLimit = grossAnnualAmount > ANNUAL_TAX_LIMIT_PP;
+
+  // 기본 연령별 연금소득세율 (3.3~5.5%)
+  const baseTaxRate = calcBaseTaxRate(input.startAge, input.receivingYears);
+
+  // 세액공제 O 적용 세율: 연 1,500만원 초과 시 16.5% 분리과세, 이하 시 기본 저율과세(3.3~5.5%)
+  const effectiveTaxRate = isExceedingLimit ? TAX_RATE_SEPARATE_HIGH : baseTaxRate;
   const monthlyAmountWithTax = grossMonthlyAmount * (1 - effectiveTaxRate);
 
-  // 세액공제 X: 원금 비율만큼 비과세, 수익 부분만 과세
+  // 세액공제 X: 원금 부분 비과세, 운용수익 부분만 과세
   const totalPrincipal = input.monthlyPayment * remainingMonths + input.currentBalance;
   const principalRatio =
     balanceAtStart > 0 ? Math.min(totalPrincipal / balanceAtStart, 1) : 1;
+
+  // 세액공제 X 운용수익 부분 연간 과세액이 1,500만원 초과하는지 여부
+  const taxableAnnualGain = grossAnnualAmount * (1 - principalRatio);
+  const taxRateOnGains = taxableAnnualGain > ANNUAL_TAX_LIMIT_PP ? TAX_RATE_SEPARATE_HIGH : baseTaxRate;
+
   const monthlyAmountWithoutTax =
     grossMonthlyAmount *
-    (principalRatio + (1 - principalRatio) * (1 - effectiveTaxRate));
+    (principalRatio + (1 - principalRatio) * (1 - taxRateOnGains));
 
   // 성장 곡선 데이터 (현재 나이 ~ 연금 개시 나이)
   const growthData: number[] = [];
@@ -79,8 +94,10 @@ export function calcPersonalPension(
   return {
     monthlyAmountWithTax: Math.max(0, monthlyAmountWithTax),
     monthlyAmountWithoutTax: Math.max(0, monthlyAmountWithoutTax),
+    grossMonthlyAmount: Math.max(0, grossMonthlyAmount),
     balanceAtStart: Math.max(0, balanceAtStart),
     growthData,
     effectiveTaxRate,
+    isExceedingLimit,
   };
 }
